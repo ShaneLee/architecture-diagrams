@@ -1,4 +1,4 @@
-const PADDING_FROM_EDGE = 20;
+const PADDING_FROM_EDGE = 50;
 
 function createCustomDiagram(svgSelector, data, darkMode = false) {
   const svg = d3.select(svgSelector);
@@ -12,6 +12,35 @@ function createCustomDiagram(svgSelector, data, darkMode = false) {
   svg.style("background-color", backgroundColor);
 
   const { nodes, links } = data;
+
+  const defaultNodeSize = 120;
+  const defaultStrokeColor = "#000";
+  const defaultStrokeWidth = 2;
+  const nodeSizeMap = new Map();
+
+  nodes.forEach((node) => {
+    const textLength = node.id.length * 7;
+    const size = Math.max(textLength, node.size || defaultNodeSize);
+    nodeSizeMap.set(node.id, size);
+  });
+
+  const leftmostNode = nodes.find((d) => d.leftmostNode);
+  const rightmostNode = nodes.find((d) => d.rightmostNode);
+
+  const svgWidth = +svg.attr("width") - PADDING_FROM_EDGE;
+  const svgHeight = +svg.attr("height") - PADDING_FROM_EDGE;
+
+  if (leftmostNode) {
+    const leftmostSize = nodeSizeMap.get(leftmostNode.id) || defaultNodeSize;
+    leftmostNode.x = PADDING_FROM_EDGE + leftmostSize / 2;
+    leftmostNode.y = svgHeight / 2;
+  }
+
+  if (rightmostNode) {
+    const rightmostSize = nodeSizeMap.get(rightmostNode.id) || defaultNodeSize;
+    rightmostNode.x = svgWidth - PADDING_FROM_EDGE - rightmostSize / 2;
+    rightmostNode.y = svgHeight / 2;
+  }
 
   const simulation = d3
     .forceSimulation(nodes)
@@ -43,10 +72,6 @@ function createCustomDiagram(svgSelector, data, darkMode = false) {
 
   // Create a dedicated layer for flow circles between links and nodes
   const flowLayer = svg.append("g").attr("class", "flows");
-
-  const defaultNodeSize = 120; // Set a default node size (larger than before)
-  const defaultStrokeColor = "#000"; // Default stroke color (black)
-  const defaultStrokeWidth = 2; // Default stroke width
 
   const node = svg
     .append("g")
@@ -206,17 +231,18 @@ function buildDiagramData(services) {
   services.forEach((service) => {
     const { shape, color } = typeToShapeAndColor[service.type] || {
       shape: "circle",
-      color: "#69b3a2", 
+      color: "#69b3a2",
     };
 
     nodes.push({
       id: service.id,
       shape: shape,
-      dataProducing: service.dataProducing,
       color: color,
       strokeColor: service.strokeColor || "#000",
       strokeWidth: service.strokeWidth || 2,
       dataProducing: service.dataProducing || false,
+      leftmostNode: service.leftmostNode,
+      rightmostNode: service.rightmostNode,
     });
 
     service.talksTo.forEach((talk) => {
@@ -245,6 +271,7 @@ const services = [
   {
     id: "Client",
     dataProducing: true,
+    leftmostNode: true,
     type: "frontend",
     talksTo: [
       {
@@ -288,7 +315,7 @@ const services = [
       {
         id: "Database",
         sendsTo: [{ id: "Database", via: "REST" }],
-        consumesFrom: [{id: "Service 2", via: "messaging"}],
+        consumesFrom: [{ id: "Service 2", via: "messaging" }],
       },
     ],
   },
@@ -305,6 +332,7 @@ const services = [
   },
   {
     id: "Database",
+    rightmostNode: true,
     type: "storage",
     talksTo: [],
   },
@@ -317,3 +345,4 @@ window.addEventListener("load", (event) => {
 
 // TODO option to prefer grid layout
 // TODO colour mapping
+// TODO rest / messaging shapes?
