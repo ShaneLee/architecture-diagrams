@@ -24,6 +24,10 @@ function createCustomDiagram(svgSelector, data, darkMode = false) {
     )
     .force("charge", d3.forceManyBody().strength(-300))
     .force("center", d3.forceCenter(300, 200))
+    .force(
+      "collide",
+      d3.forceCollide().radius((d) => (d.size || 120) / 2 + 10) // Prevent overlapping
+    )
     .on("tick", ticked);
 
   const link = svg
@@ -311,6 +315,5 @@ window.addEventListener("load", (event) => {
   createCustomDiagram("svg", diagramData, true);
 });
 
-// TODO prevent the shapes overlapping
 // TODO option to prefer grid layout
 // TODO colour mapping
