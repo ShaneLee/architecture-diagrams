@@ -1,3 +1,49 @@
+// Gruvbox theme source https://github.com/morhetz/gruvbox
+gruxBoxDarkTheme = {
+  "bg": "#282828",
+  "bg0_h": "#1d2021",
+  "bg0": "#282828",
+  "bg0_s": "#32302f",
+  "bg1": "#3c3836",
+  "bg2": "#504945",
+  "bg3": "#665c54",
+  "bg4": "#7c6f64",
+  "fg": "#ebbb2",
+  "fg0": "#fbf1c7",
+  // "fg0": "#fbf1c7",
+  "n": {
+    "red": "#cc241d",
+    "green": "#98971a",
+    "yellow": "#d79921",
+    "blue": "#458588",
+    "purple": "#b16286",
+    "aqua": "#689d6a",
+    "gray": "#a89984",
+    "orange": "#d65d0e"
+  },
+  "bright": {
+    "red": "#cc241d",
+    "green": "#98971a",
+    "yellow": "#d79921",
+    "blue": "#458588",
+    "purple": "#b16286",
+    "aqua": "#689d6a",
+    "gray": "#928374",
+    "orange": "#fe8019"
+  }
+};
+
+gruxBoxLightTheme = {
+  "bg": "#282828",
+  "red": "#cc241d",
+  "green": "#98971a",
+  "yellow": "#d79921",
+  "blue": "#458588",
+  "purple": "#b16286",
+  "aqua": "#689d6a",
+  "gray": "#a89984"
+};
+
 const PADDING_FROM_EDGE = 50;
 
 function createCustomDiagram(svgSelector, data, darkMode = false) {
@@ -201,7 +247,6 @@ function createCustomDiagram(svgSelector, data, darkMode = false) {
   }
 
   function dragged(event, d) {
-    // Minus 20 is padding around the edge
     const svgWidth = +svg.attr("width") - PADDING_FROM_EDGE;
     const svgHeight = +svg.attr("height") - PADDING_FROM_EDGE;
 
