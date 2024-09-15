@@ -1,66 +1,74 @@
 // Gruvbox theme source https://github.com/morhetz/gruvbox
-gruxBoxDarkTheme = {
-  "bg": "#282828",
-  "bg0_h": "#1d2021",
-  "bg0": "#282828",
-  "bg0_s": "#32302f",
-  "bg1": "#3c3836",
-  "bg2": "#504945",
-  "bg3": "#665c54",
-  "bg4": "#7c6f64",
-  "fg": "#ebbb2",
-  "fg0": "#fbf1c7",
-  // "fg0": "#fbf1c7",
-  "n": {
-    "red": "#cc241d",
-    "green": "#98971a",
-    "yellow": "#d79921",
-    "blue": "#458588",
-    "purple": "#b16286",
-    "aqua": "#689d6a",
-    "gray": "#a89984",
-    "orange": "#d65d0e"
-  },
-  "bright": {
-    "red": "#cc241d",
-    "green": "#98971a",
-    "yellow": "#d79921",
-    "blue": "#458588",
-    "purple": "#b16286",
-    "aqua": "#689d6a",
-    "gray": "#928374",
-    "orange": "#fe8019"
+// Hypergruv box https://github.com/mcchrish/hyperterm-gruvbox-dark/tree/master
+class GruvBoxDarkTheme {
+  constructor() {
+    this.fg = "#ebdbb2";
+    this.bg = "#282828";
+    this.black = "#928374";
+    this.red = "#fb4934";
+    this.green = "#b8bb26";
+    this.yellow = "#fabd2f";
+    this.blue = "#83a598";
+    this.magenta = "#d3869b";
+    this.cyan = "#8ec07c";
+    this.white = "#fbf1c7";
+    this.lightBlack = "#ebdbb2";
+    this.lightRed = "#cc241d";
+    this.lightGreen = "#98971a";
+    this.lightYellow = "#d79921";
+    this.lightBlue = "#458588";
+    this.lightMagenta = "#b16286";
+    this.lightCyan = "#689d6a";
+    this.lightWhite = "#a89984";
   }
-};
+}
+gruvBoxDarkTheme = new GruvBoxDarkTheme();
 
-gruxBoxLightTheme = {
-  "bg": "#282828",
-  "red": "#cc241d",
-  "green": "#98971a",
-  "yellow": "#d79921",
-  "blue": "#458588",
-  "purple": "#b16286",
-  "aqua": "#689d6a",
-  "gray": "#a89984"
-};
+class Solarised {
+  constructor() {
+    this.fg = "#839496";
+    this.bg = "#002b36";
+    this.black = "#073642";
+    this.red = "#dc322f";
+    this.green = "#859900";
+    this.yellow = "#b58900";
+    this.blue = "#268bd2";
+    this.magenta = "#d33682";
+    this.cyan = "#2aa198";
+    this.white = "#eee8d5";
+    this.lightBlack = "#586e75";
+    this.lightRed = "#cb4b16";
+    this.lightGreen = "#586e75";
+    this.lightYellow = "#657b83";
+    this.lightBlue = "#839496";
+    this.lightMagenta = "#6c71c4";
+    this.lightCyan = "#93a1a1";
+    this.lightWhite = "#fdf6e3";
+  }
+}
+
+solarised = new Solarised();
 
 const PADDING_FROM_EDGE = 50;
 
-function createCustomDiagram(svgSelector, data, darkMode = false) {
+function createCustomDiagram(svgSelector, data) {
   const svg = d3.select(svgSelector);
 
-  const backgroundColor = darkMode ? "#333" : "#fff";
-  const nodeColor = darkMode ? "#555" : "#69b3a2";
-  const textColor = darkMode ? "#fff" : "#000";
-  const linkColor = darkMode ? "#777" : "#999";
-  const flowColor = darkMode ? "#f00" : "red";
+  const theme = darkMode ? gruvBoxDarkTheme : solarised;
+
+  const backgroundColor = theme.bg;
+  const nodeColor = theme.lightWhite;
+  const textColor = theme.bg;
+  const linkColor = theme.fg;
+  // TODO type of data colour
+  const flowColor = theme.red;
 
   svg.style("background-color", backgroundColor);
 
   const { nodes, links } = data;
 
   const defaultNodeSize = 120;
-  const defaultStrokeColor = "#000";
+  const defaultStrokeColor = theme.black;
   const defaultStrokeWidth = 2;
   const nodeSizeMap = new Map();
 
@@ -262,28 +270,29 @@ function createCustomDiagram(svgSelector, data, darkMode = false) {
 }
 
 function buildDiagramData(services) {
+  const theme = darkMode ? gruvBoxDarkTheme : solarised;
   const nodes = [];
   const links = [];
 
   const typeToShapeAndColor = {
-    frontend: { shape: "circle", color: "#a1d99b" },
-    gateway: { shape: "rect", color: "#66b3ff" },
-    infrastructure: { shape: "circle", color: "#ffcc00" },
-    backend: { shape: "rect", color: "#d62728" },
-    storage: { shape: "rect", color: "#9467bd" },
+    frontend: { shape: "circle", color: theme.magenta },
+    gateway: { shape: "rect", color: theme.yellow },
+    infrastructure: { shape: "circle", color: theme.lightWhite },
+    backend: { shape: "rect", color: theme.green },
+    storage: { shape: "rect", color: theme.blue },
   };
 
   services.forEach((service) => {
     const { shape, color } = typeToShapeAndColor[service.type] || {
       shape: "circle",
-      color: "#69b3a2",
+      color: theme.cyan,
     };
 
     nodes.push({
       id: service.id,
       shape: shape,
       color: color,
-      strokeColor: service.strokeColor || "#000",
+      strokeColor: service.strokeColor || theme.black,
       strokeWidth: service.strokeWidth || 2,
       dataProducing: service.dataProducing || false,
       leftmostNode: service.leftmostNode,
@@ -295,7 +304,7 @@ function buildDiagramData(services) {
         links.push({
           source: service.id,
           target: send.id,
-          style: { stroke: "#a1d99b", strokeWidth: 2 },
+          style: { stroke: theme.cyan, strokeWidth: 2 },
         });
       });
 
@@ -303,7 +312,7 @@ function buildDiagramData(services) {
         links.push({
           source: consume.id,
           target: service.id,
-          style: { stroke: "#9467bd", strokeWidth: 2 },
+          style: { stroke: theme.lightMagenta, strokeWidth: 2 },
         });
       });
     });
@@ -383,9 +392,11 @@ const services = [
   },
 ];
 
+const darkMode = true;
+
 window.addEventListener("load", (event) => {
   const diagramData = buildDiagramData(services);
-  createCustomDiagram("svg", diagramData, true);
+  createCustomDiagram("svg", diagramData);
 });
 
 // TODO option to prefer grid layout
