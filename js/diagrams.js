@@ -152,7 +152,7 @@ function createCustomDiagram(svgSelector, data) {
     if (d.shape === "circle") {
       d3.select(this)
         .append("circle")
-        .attr("r", size / 2) // Make radius proportional to text
+        .attr("r", size / 2)
         .attr("fill", d.color || nodeColor)
         .attr("stroke", strokeColor)
         .attr("stroke-width", strokeWidth);
@@ -162,10 +162,40 @@ function createCustomDiagram(svgSelector, data) {
         .attr("width", size)
         .attr("height", size / 2)
         .attr("fill", d.color || nodeColor)
-        .attr("x", -(size / 2)) // Center the rectangle
+        .attr("x", -(size / 2))
         .attr("y", -(size / 4))
-        .attr("rx", 10) // Rounded corners
-        .attr("ry", 10) // Rounded corners
+        .attr("rx", 10)
+        .attr("ry", 10)
+        .attr("stroke", strokeColor)
+        .attr("stroke-width", strokeWidth);
+    } else if (d.shape === "database") {
+      d3.select(this)
+        .append("ellipse")
+        .attr("cx", 0)
+        .attr("cy", -(size / 4))
+        .attr("rx", size / 2)
+        .attr("ry", size / 8)
+        .attr("fill", d.color || nodeColor)
+        .attr("stroke", strokeColor)
+        .attr("stroke-width", strokeWidth);
+
+      d3.select(this)
+        .append("rect")
+        .attr("width", size)
+        .attr("height", size / 2)
+        .attr("x", -(size / 2))
+        .attr("y", -(size / 4))
+        .attr("fill", d.color || nodeColor)
+        .attr("stroke", strokeColor)
+        .attr("stroke-width", strokeWidth);
+
+      d3.select(this)
+        .append("path")
+        .attr(
+          "d",
+          `M${-size / 2},0 A${size / 2},${size / 8} 0 0,0 ${size / 2},0`
+        )
+        .attr("fill", "none")
         .attr("stroke", strokeColor)
         .attr("stroke-width", strokeWidth);
     }
@@ -275,11 +305,11 @@ function buildDiagramData(services) {
   const links = [];
 
   const typeToShapeAndColor = {
-    frontend: { shape: "circle", color: theme.magenta },
+    frontend: { shape: "rect", color: theme.magenta },
     gateway: { shape: "rect", color: theme.yellow },
     infrastructure: { shape: "circle", color: theme.lightWhite },
     backend: { shape: "rect", color: theme.green },
-    storage: { shape: "rect", color: theme.blue },
+    storage: { shape: "database", horizontal: false, color: theme.blue },
   };
 
   services.forEach((service) => {
@@ -400,5 +430,4 @@ window.addEventListener("load", (event) => {
 });
 
 // TODO option to prefer grid layout
-// TODO colour mapping
 // TODO rest / messaging shapes?
