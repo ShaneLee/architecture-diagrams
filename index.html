@@ -8,6 +8,8 @@
   <link rel="stylesheet" type="text/css" href="css/styles.css">
 </head>
 <body>
+  <button onclick="saveDiagramToFile()">Save Diagram as File</button>
+  <input type="file" id="fileInput" accept=".json" onchange="uploadDiagramFile(event)" />
   <svg id="diagram" width="1200" height="1200"></svg>
 </body>
 </html>
