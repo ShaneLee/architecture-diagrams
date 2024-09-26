@@ -241,7 +241,6 @@ function createCustomDiagram(svgSelector, data) {
 
   // Identify nodes with 'dataProducing = true' and initiate the flow
   nodes.forEach(node => {
-    console.log(node)
     if (node.dataProducing) {
       // Find all outgoing links from this node
       const outgoingLinks = links.filter(l => l.source.id === node.id)
