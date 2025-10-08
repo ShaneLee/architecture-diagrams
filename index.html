@@ -11,5 +11,79 @@
   <button onclick="saveDiagramToFile()">Save Diagram as File</button>
   <input type="file" id="fileInput" accept=".json" onchange="uploadDiagramFile(event)" />
   <svg id="diagram" width="1200" height="1200"></svg>
+  <script>
+    const services = [
+      {
+        "id": "Client",
+        "dataProducing": true,
+        "leftmostNode": true,
+        "type": "frontend",
+        "talksTo": [
+          {
+            "id": "API Gateway",
+            "sendsTo": [{ "id": "API Gateway", "via": "REST" }],
+            "consumesFrom": []
+          }
+        ]
+      },
+      {
+        "id": "API Gateway",
+        "type": "gateway",
+        "talksTo": [
+          {
+            "id": "Service Mesh",
+            "sendsTo": [{ "id": "Service Mesh", "via": "REST" }],
+            "consumesFrom": []
+          }
+        ]
+      },
+      {
+        "id": "Service Mesh",
+        "type": "infrastructure",
+        "talksTo": [
+          {
+            "id": "Service 1",
+            "sendsTo": [{ "id": "Service 1", "via": "REST" }],
+            "consumesFrom": []
+          },
+          {
+            "id": "Service 2",
+            "sendsTo": [{ "id": "Service 2", "via": "REST" }],
+            "consumesFrom": []
+          }
+        ]
+      },
+      {
+        "id": "Service 1",
+        "type": "backend",
+        "talksTo": [
+          {
+            "id": "Database",
+            "sendsTo": [{ "id": "Database", "via": "REST" }],
+            "consumesFrom": [{ "id": "Service 2", "via": "messaging" }]
+          }
+        ]
+      },
+      {
+        "id": "Service 2",
+        "type": "backend",
+        "talksTo": [
+          {
+            "id": "Database",
+            "sendsTo": [{ "id": "Database", "via": "REST" }],
+            "consumesFrom": []
+          }
+        ]
+      },
+      {
+        "id": "Database",
+        "rightmostNode": true,
+        "type": "storage",
+        "talksTo": []
+      }
+    ]
+    const diagramData = buildDiagramData(services);
+    createCustomDiagram('#diagram', diagramData);
+  </script>
 </body>
 </html>

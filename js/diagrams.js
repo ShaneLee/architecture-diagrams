@@ -53,14 +53,14 @@ const PADDING_FROM_EDGE = 50
 
 function createCustomDiagram(svgSelector, data) {
   const svg = d3.select(svgSelector)
-
+  const svgWidth = +svg.attr('width')
+  const svgHeight = +svg.attr('height')
   const theme = darkMode ? gruvBoxDarkTheme : solarised
 
   const backgroundColor = theme.bg
   const nodeColor = theme.lightWhite
   const textColor = theme.bg
   const linkColor = theme.fg
-  // TODO type of data colour
   const flowColor = theme.red
 
   svg.style('background-color', backgroundColor)
@@ -70,29 +70,22 @@ function createCustomDiagram(svgSelector, data) {
   const defaultNodeSize = 120
   const defaultStrokeColor = theme.black
   const defaultStrokeWidth = 2
-  const nodeSizeMap = new Map()
 
   nodes.forEach(node => {
     const textLength = node.id.length * 7
-    const size = Math.max(textLength, node.size || defaultNodeSize)
-    nodeSizeMap.set(node.id, size)
+    node.size = Math.max(textLength, node.size || defaultNodeSize)
   })
 
   const leftmostNode = nodes.find(d => d.leftmostNode)
   const rightmostNode = nodes.find(d => d.rightmostNode)
 
-  const svgWidth = +svg.attr('width') - PADDING_FROM_EDGE
-  const svgHeight = +svg.attr('height') - PADDING_FROM_EDGE
-
   if (leftmostNode) {
-    const leftmostSize = nodeSizeMap.get(leftmostNode.id) || defaultNodeSize
-    leftmostNode.x = PADDING_FROM_EDGE + leftmostSize / 2
+    leftmostNode.x = PADDING_FROM_EDGE + leftmostNode.size / 2
     leftmostNode.y = svgHeight / 2
   }
 
   if (rightmostNode) {
-    const rightmostSize = nodeSizeMap.get(rightmostNode.id) || defaultNodeSize
-    rightmostNode.x = svgWidth - PADDING_FROM_EDGE - rightmostSize / 2
+    rightmostNode.x = svgWidth - PADDING_FROM_EDGE - rightmostNode.size / 2
     rightmostNode.y = svgHeight / 2
   }
 
@@ -106,10 +99,10 @@ function createCustomDiagram(svgSelector, data) {
         .distance(150),
     )
     .force('charge', d3.forceManyBody().strength(-300))
-    .force('center', d3.forceCenter(300, 200))
+    .force('center', d3.forceCenter(svgWidth / 2, svgHeight / 2))
     .force(
       'collide',
-      d3.forceCollide().radius(d => (d.size || 120) / 2 + 10), // Prevent overlapping
+      d3.forceCollide().radius(d => d.size / 2 + 10), // Prevent overlapping
     )
     .on('tick', ticked)
 
@@ -124,7 +117,6 @@ function createCustomDiagram(svgSelector, data) {
     .attr('stroke', d => d.style.stroke || linkColor)
     .attr('stroke-dasharray', d => d.style.dasharray || '0')
 
-  // Create a dedicated layer for flow circles between links and nodes
   const flowLayer = svg.append('g').attr('class', 'flows')
 
   const node = svg
@@ -137,55 +129,48 @@ function createCustomDiagram(svgSelector, data) {
     .call(d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended))
 
   node.each(function (d) {
-    const textLength = d.id.length * 7
-    const size = Math.max(textLength, d.size || defaultNodeSize)
-
+    const el = d3.select(this)
     const strokeColor = d.strokeColor || defaultStrokeColor
     const strokeWidth = d.strokeWidth || defaultStrokeWidth
 
     if (d.shape === 'circle') {
-      d3.select(this)
-        .append('circle')
-        .attr('r', size / 2)
+      el.append('circle')
+        .attr('r', d.size / 2)
         .attr('fill', d.color || nodeColor)
         .attr('stroke', strokeColor)
         .attr('stroke-width', strokeWidth)
     } else if (d.shape === 'rect') {
-      d3.select(this)
-        .append('rect')
-        .attr('width', size)
-        .attr('height', size / 2)
+      el.append('rect')
+        .attr('width', d.size)
+        .attr('height', d.size / 2)
         .attr('fill', d.color || nodeColor)
-        .attr('x', -(size / 2))
-        .attr('y', -(size / 4))
+        .attr('x', -(d.size / 2))
+        .attr('y', -(d.size / 4))
         .attr('rx', 10)
         .attr('ry', 10)
         .attr('stroke', strokeColor)
         .attr('stroke-width', strokeWidth)
     } else if (d.shape === 'database') {
-      d3.select(this)
-        .append('ellipse')
+      el.append('ellipse')
         .attr('cx', 0)
-        .attr('cy', -(size / 4))
-        .attr('rx', size / 2)
-        .attr('ry', size / 8)
+        .attr('cy', -(d.size / 4))
+        .attr('rx', d.size / 2)
+        .attr('ry', d.size / 8)
         .attr('fill', d.color || nodeColor)
         .attr('stroke', strokeColor)
         .attr('stroke-width', strokeWidth)
 
-      d3.select(this)
-        .append('rect')
-        .attr('width', size)
-        .attr('height', size / 2)
-        .attr('x', -(size / 2))
-        .attr('y', -(size / 4))
+      el.append('rect')
+        .attr('width', d.size)
+        .attr('height', d.size / 2)
+        .attr('x', -(d.size / 2))
+        .attr('y', -(d.size / 4))
         .attr('fill', d.color || nodeColor)
         .attr('stroke', strokeColor)
         .attr('stroke-width', strokeWidth)
 
-      d3.select(this)
-        .append('path')
-        .attr('d', `M${-size / 2},0 A${size / 2},${size / 8} 0 0,0 ${size / 2},0`)
+      el.append('path')
+        .attr('d', `M${-d.size / 2},0 A${d.size / 2},${d.size / 8} 0 0,0 ${d.size / 2},0`)
         .attr('fill', 'none')
         .attr('stroke', strokeColor)
         .attr('stroke-width', strokeWidth)
@@ -211,48 +196,36 @@ function createCustomDiagram(svgSelector, data) {
       .attr('cx', sourceNode.x)
       .attr('cy', sourceNode.y)
 
-    function animateFlow() {
-      flowCircle
-        .attr('cx', sourceNode.x) // Reset x position
-        .attr('cy', sourceNode.y) // Reset y position
-        .transition()
-        .duration(2000)
-        .attr('cx', targetNode.x) // Ending x position
-        .attr('cy', targetNode.y) // Ending y position
-        .on('end', function () {
-          d3.select(this).remove()
-
-          const childLinks = links.filter(l => l.source.id === targetNode.id)
-
-          if (childLinks.length > 0) {
-            childLinks.forEach(link => propagateFlow(targetNode, link.target, resetOrigin))
-          } else {
-            if (resetOrigin) {
-              setTimeout(function () {
-                propagateFlow(resetOrigin, resetOrigin, resetOrigin)
-              }, 500)
-            }
-          }
-        })
-    }
-
-    animateFlow()
+    animateFlow(flowCircle, sourceNode, targetNode, resetOrigin)
   }
 
-  // Identify nodes with 'dataProducing = true' and initiate the flow
+  function animateFlow(flowCircle, sourceNode, targetNode, resetOrigin) {
+    flowCircle
+      .attr('cx', sourceNode.x)
+      .attr('cy', sourceNode.y)
+      .transition()
+      .duration(2000)
+      .attr('cx', targetNode.x)
+      .attr('cy', targetNode.y)
+      .on('end', function () {
+        d3.select(this).remove()
+        const childLinks = links.filter(l => l.source.id === targetNode.id)
+        if (childLinks.length > 0) {
+          childLinks.forEach(link => propagateFlow(targetNode, link.target, resetOrigin))
+        } else if (resetOrigin) {
+          setTimeout(() => propagateFlow(resetOrigin, resetOrigin, resetOrigin), 500)
+        }
+      })
+  }
+
   nodes.forEach(node => {
     if (node.dataProducing) {
-      // Find all outgoing links from this node
       const outgoingLinks = links.filter(l => l.source.id === node.id)
       outgoingLinks.forEach(link => propagateFlow(node, link.target, node))
     }
   })
 
   function ticked() {
-    const svgWidth = +svg.attr('width') - PADDING_FROM_EDGE
-    const svgHeight = +svg.attr('height') - PADDING_FROM_EDGE
-
-    // Update link positions
     link
       .attr('x1', d => d.source.x)
       .attr('y1', d => d.source.y)
@@ -260,9 +233,9 @@ function createCustomDiagram(svgSelector, data) {
       .attr('y2', d => d.target.y)
 
     node.attr('transform', function (d) {
-      d.x = Math.max(PADDING_FROM_EDGE, Math.min(svgWidth, d.x))
-      d.y = Math.max(PADDING_FROM_EDGE, Math.min(svgHeight, d.y))
-      return 'translate(' + d.x + ',' + d.y + ')'
+      d.x = Math.max(d.size / 2, Math.min(svgWidth - d.size / 2, d.x))
+      d.y = Math.max(d.size / 2, Math.min(svgHeight - d.size / 2, d.y))
+      return `translate(${d.x},${d.y})`
     })
   }
 
@@ -273,11 +246,8 @@ function createCustomDiagram(svgSelector, data) {
   }
 
   function dragged(event, d) {
-    const svgWidth = +svg.attr('width') - PADDING_FROM_EDGE
-    const svgHeight = +svg.attr('height') - PADDING_FROM_EDGE
-
-    d.fx = Math.max(PADDING_FROM_EDGE, Math.min(svgWidth, event.x))
-    d.fy = Math.max(PADDING_FROM_EDGE, Math.min(svgHeight, event.y))
+    d.fx = event.x
+    d.fy = event.y
   }
 
   function dragended(event, d) {
@@ -317,98 +287,33 @@ function buildDiagramData(services) {
       rightmostNode: service.rightmostNode,
     })
 
-    service.talksTo.forEach(talk => {
-      talk.sendsTo.forEach(send => {
-        links.push({
-          source: service.id,
-          target: send.id,
-          style: { stroke: theme.cyan, strokeWidth: 2 },
-        })
-      })
+    if (service.talksTo) {
+      service.talksTo.forEach(talk => {
+        if (talk.sendsTo) {
+          talk.sendsTo.forEach(send => {
+            links.push({
+              source: service.id,
+              target: send.id,
+              style: { stroke: theme.cyan, strokeWidth: 2 },
+            })
+          })
+        }
 
-      talk.consumesFrom.forEach(consume => {
-        links.push({
-          source: consume.id,
-          target: service.id,
-          style: { stroke: theme.lightMagenta, strokeWidth: 2 },
-        })
+        if (talk.consumesFrom) {
+          talk.consumesFrom.forEach(consume => {
+            links.push({
+              source: consume.id,
+              target: service.id,
+              style: { stroke: theme.lightMagenta, strokeWidth: 2 },
+            })
+          })
+        }
       })
-    })
+    }
   })
 
   return { nodes, links }
 }
-
-const services = [
-  {
-    id: 'Client',
-    dataProducing: true,
-    leftmostNode: true,
-    type: 'frontend',
-    talksTo: [
-      {
-        id: 'API Gateway',
-        sendsTo: [{ id: 'API Gateway', via: 'REST' }],
-        consumesFrom: [],
-      },
-    ],
-  },
-  {
-    id: 'API Gateway',
-    type: 'gateway',
-    talksTo: [
-      {
-        id: 'Service Mesh',
-        sendsTo: [{ id: 'Service Mesh', via: 'REST' }],
-        consumesFrom: [],
-      },
-    ],
-  },
-  {
-    id: 'Service Mesh',
-    type: 'infrastructure',
-    talksTo: [
-      {
-        id: 'Service 1',
-        sendsTo: [{ id: 'Service 1', via: 'REST' }],
-        consumesFrom: [],
-      },
-      {
-        id: 'Service 2',
-        sendsTo: [{ id: 'Service 2', via: 'REST' }],
-        consumesFrom: [],
-      },
-    ],
-  },
-  {
-    id: 'Service 1',
-    type: 'backend',
-    talksTo: [
-      {
-        id: 'Database',
-        sendsTo: [{ id: 'Database', via: 'REST' }],
-        consumesFrom: [{ id: 'Service 2', via: 'messaging' }],
-      },
-    ],
-  },
-  {
-    id: 'Service 2',
-    type: 'backend',
-    talksTo: [
-      {
-        id: 'Database',
-        sendsTo: [{ id: 'Database', via: 'REST' }],
-        consumesFrom: [],
-      },
-    ],
-  },
-  {
-    id: 'Database',
-    rightmostNode: true,
-    type: 'storage',
-    talksTo: [],
-  },
-]
 
 function downloadFile(content, fileName, contentType) {
   const a = document.createElement('a')
@@ -416,6 +321,7 @@ function downloadFile(content, fileName, contentType) {
   a.href = URL.createObjectURL(file)
   a.download = fileName
   a.click()
+  URL.revokeObjectURL(a.href)
 }
 
 function saveDiagramToFile() {
@@ -434,10 +340,7 @@ function exportDiagramData(nodes, links) {
 function importDiagramData(jsonString) {
   const data = JSON.parse(jsonString)
   if (data.nodes && data.links) {
-    nodes = data.nodes
-    links = data.links
-
-    createCustomDiagram('svg', { nodes, links })
+    createCustomDiagram('svg', data)
   } else {
     console.error('Invalid diagram data.')
   }
@@ -471,11 +374,3 @@ function uploadDiagramFile(event) {
 }
 
 const darkMode = true
-
-window.addEventListener('load', event => {
-  const diagramData = buildDiagramData(services)
-  createCustomDiagram('svg', diagramData)
-})
-
-// TODO option to prefer grid layout
-// TODO rest / messaging shapes?

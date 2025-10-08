@@ -1,3 +1,13 @@
 body {
   background: #000;
+  font-family: sans-serif;
+}
+
+.links line {
+  stroke-opacity: 0.6;
+}
+
+.nodes text {
+  pointer-events: none;
+  /* text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; */
 }
